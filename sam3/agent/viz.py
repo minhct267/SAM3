@@ -5,10 +5,21 @@
 import cv2
 import numpy as np
 import pycocotools.mask as mask_utils
-from PIL import Image
+from PIL import Image, ImageOps
 
 from .helpers.visualizer import Visualizer
 from .helpers.zoom_in import render_zoom_in
+
+
+def _load_image_rgb_with_exif(img_path: str) -> np.ndarray:
+    """
+    Load image as RGB numpy array with EXIF orientation applied.
+    This matches the orientation used by PIL in the SAM3 pipeline, so mask
+    dimensions (orig_img_h, orig_img_w) align with the loaded image.
+    """
+    pil_img = Image.open(img_path).convert("RGB")
+    pil_img = ImageOps.exif_transpose(pil_img)
+    return np.array(pil_img)
 
 
 def visualize(
@@ -47,10 +58,7 @@ def visualize(
         ]
         binary_masks = [mask_utils.decode(rle) for rle in rle_masks]
 
-        img_bgr = cv2.imread(img_path)
-        if img_bgr is None:
-            raise FileNotFoundError(f"Could not read image: {img_path}")
-        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        img_rgb = _load_image_rgb_with_exif(img_path)
 
         viz = Visualizer(
             img_rgb,
@@ -85,7 +93,8 @@ def visualize(
                 "size": [orig_h, orig_w],
             },
         }
-        pil_img = Image.open(img_path)
+        pil_img = Image.open(img_path).convert("RGB")
+        pil_img = ImageOps.exif_transpose(pil_img)
         pil_mask_i_zoomed, color_hex = render_zoom_in(
             object_data, pil_img, mask_alpha=mask_alpha
         )
@@ -95,10 +104,7 @@ def visualize(
         rle_i = {"size": (orig_h, orig_w), "counts": input_json["pred_masks"][idx]}
         bin_i = mask_utils.decode(rle_i)
 
-        img_bgr_i = cv2.imread(img_path)
-        if img_bgr_i is None:
-            raise FileNotFoundError(f"Could not read image: {img_path}")
-        img_rgb_i = cv2.cvtColor(img_bgr_i, cv2.COLOR_BGR2RGB)
+        img_rgb_i = _load_image_rgb_with_exif(img_path)
 
         viz_i = Visualizer(
             img_rgb_i,
