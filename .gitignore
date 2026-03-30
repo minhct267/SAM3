@@ -154,3 +154,9 @@ Thumbs.db
 
 # Test files
 test/
+
+# Agent output
+agent_output/
+
+# Environment variables
+.env

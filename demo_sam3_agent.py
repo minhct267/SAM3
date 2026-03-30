@@ -9,6 +9,8 @@ import io
 import json
 import os
 from functools import partial
+from pathlib import Path
+from dotenv import load_dotenv
 
 import numpy as np
 import pycocotools.mask as mask_utils
@@ -22,16 +24,21 @@ from sam3.agent.client_sam3 import call_sam_service as call_sam_service_orig
 from sam3.agent.inference import run_single_image_inference
 from sam3.model.sam3_image_processor import Sam3Processor
 
+# Load .env next to this script (project root) so OLLAMA_* are available to os.getenv.
+_dotenv_path = Path(__file__).resolve().parent / ".env"
+if _dotenv_path.is_file():
+    load_dotenv(_dotenv_path)
+
 # --- Configure these (Ollama Cloud API key from https://ollama.com/settings/keys) ---
-OLLAMA_API_KEY = "391877a2fd204a809e36c496a1ff64c1.xxpLOf9O7Mf3rFNhOAjFVWo6"
-OLLAMA_MODEL = "qwen3.5:cloud"
-IMAGE_PATH = "demo/img_5.png"
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL")
+IMAGE_PATH = "test/img_3.png"
 PROMPT = "the blue chair"
 # -----------------------------------------------------------------------------------
 
 OLLAMA_BASE_URL = "https://ollama.com/v1"
 OUTPUT_DIR = "agent_output"
-RESULTS_DIR = "demo/results"
+RESULTS_DIR = "test/results"
 MAX_TOKENS = 4096
 # Resize images with longer side > this before sending to Ollama to avoid 500 (payload too large)
 MAX_IMAGE_DIMENSION = 1024
